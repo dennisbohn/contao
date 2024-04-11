@@ -1070,7 +1070,7 @@ class tl_content extends Backend
 	/**
 	 * Filter the content elements
 	 */
-	public function filterContentElements()
+	public function filterContentElements($dc)
 	{
 		$user = BackendUser::getInstance();
 
@@ -1079,10 +1079,27 @@ class tl_content extends Backend
 			return;
 		}
 
+		$compositor = System::getContainer()->get('contao.fragment.compositor');
+
 		if (empty($user->elements))
 		{
 			$GLOBALS['TL_DCA']['tl_content']['config']['closed'] = true;
 			$GLOBALS['TL_DCA']['tl_content']['config']['notEditable'] = true;
+		}
+		elseif ($compositor->supportsNesting('contao.content_element.' . $dc->getCurrentRecord()['type']))
+		{
+			$allowedTypes = $compositor->getAllowedTypes('contao.content_element.' . $dc->getCurrentRecord()['type']);
+			$allowedTypesIntersect = empty($allowedTypes) ? $user->elements : array_intersect($allowedTypes, $user->elements);
+
+			if (empty($allowedTypesIntersect))
+			{
+				$GLOBALS['TL_DCA']['tl_content']['config']['closed'] = true;
+				$GLOBALS['TL_DCA']['tl_content']['config']['notEditable'] = true;					
+			}
+			elseif (!in_array($GLOBALS['TL_DCA']['tl_content']['fields']['type']['sql']['default'] ?? null, $allowedTypesIntersect))
+			{
+				$GLOBALS['TL_DCA']['tl_content']['fields']['type']['default'] = $allowedTypesIntersect[0];
+			}
 		}
 		elseif (!in_array($GLOBALS['TL_DCA']['tl_content']['fields']['type']['sql']['default'] ?? null, $user->elements))
 		{
