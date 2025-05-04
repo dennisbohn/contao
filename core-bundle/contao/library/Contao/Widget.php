@@ -1202,7 +1202,7 @@ abstract class Widget extends Controller
 				{
 					foreach ($v as $vv)
 					{
-						if ($strInput == $vv['value'])
+						if (\is_array($vv) && $strInput == $vv['value'])
 						{
 							$blnFound = true;
 						}
