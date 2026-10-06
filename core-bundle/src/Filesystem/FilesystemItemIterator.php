@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Filesystem;
 
+use Contao\CoreBundle\File\MediaCodec;
 use Contao\CoreBundle\Util\CachingTraversable;
 
 /**
@@ -208,6 +209,12 @@ class FilesystemItemIterator implements \IteratorAggregate, \Countable
         $sortOrderA = array_search($a->getMimeType(), self::MEDIA_TYPE_SORT_ORDER, true);
         $sortOrderB = array_search($b->getMimeType(), self::MEDIA_TYPE_SORT_ORDER, true);
 
-        return (false === $sortOrderA ? PHP_INT_MAX : $sortOrderA) <=> (false === $sortOrderB ? PHP_INT_MAX : $sortOrderB);
+        if (0 !== ($sort = (false === $sortOrderA ? PHP_INT_MAX : $sortOrderA) <=> (false === $sortOrderB ? PHP_INT_MAX : $sortOrderB))) {
+            return $sort;
+        }
+
+        // Same media type (e.g. AV1 and H.265 in .mp4): the more efficient codec comes
+        // first (see MediaCodec)
+        return MediaCodec::getPriority($a->getPath()) <=> MediaCodec::getPriority($b->getPath());
     }
 }

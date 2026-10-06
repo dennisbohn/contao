@@ -98,6 +98,22 @@ class FilesystemItemIteratorTest extends TestCase
         );
     }
 
+    public function testSortByMediaTypeAndCodec(): void
+    {
+        // Same container (.mp4): AV1 before H.265 before H.264 before files without
+        // codec hint
+        $h264 = new FilesystemItem(true, 'video.h264.mp4', 100, 100, 'video/mp4');
+        $unknown = new FilesystemItem(true, 'video.mp4', 100, 100, 'video/mp4');
+        $av1 = new FilesystemItem(true, 'video.av1.mp4', 100, 100, 'video/mp4');
+        $hevc = new FilesystemItem(true, 'video.hevc.mp4', 100, 100, 'video/mp4');
+        $webm = new FilesystemItem(true, 'video.webm', 100, 100, 'video/webm');
+
+        $iterator = new FilesystemItemIterator([$h264, $unknown, $av1, $hevc, $webm]);
+        $sorted = $iterator->sort(SortMode::mediaTypePriority);
+
+        $this->assertSame([$webm, $av1, $hevc, $h264, $unknown], iterator_to_array($sorted));
+    }
+
     public function testSort(): void
     {
         $fileA = new FilesystemItem(true, 'foo/img2', 100);
